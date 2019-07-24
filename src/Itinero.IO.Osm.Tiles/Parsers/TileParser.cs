@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Itinero.Data.Attributes;
 using Itinero.Data.Graphs;
 using Itinero.Data.Shapes;
@@ -18,11 +19,6 @@ namespace Itinero.IO.Osm.Tiles.Parsers
         /// The base url to fetch the tiles from.
         /// </summary>
         public const string BaseUrl = "https://tiles.openplanner.team/planet";
-
-        /// <summary>
-        /// The function to download from a given url.
-        /// </summary>
-        public static Func<string, Stream> DownloadFunc = Download.DownloadHelper.Download;
         
         private static readonly Lazy<Dictionary<string, TagMapperConfig>> ReverseMappingLazy = new Lazy<Dictionary<string, TagMapperConfig>>(
             () => TagMapperConfigParser.Parse(Extensions.LoadEmbeddedResourceStream("Itinero.IO.Osm.Tiles.ontology.mapping_config.json")));

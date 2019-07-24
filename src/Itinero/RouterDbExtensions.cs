@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Itinero.Algorithms;
 using Itinero.Algorithms.DataStructures;
 using Itinero.Algorithms.Dijkstra;
@@ -30,7 +31,7 @@ namespace Itinero
         /// <param name="maxOffsetInMeter">The maximum offset in meter.</param>
         /// <param name="profile">The profile to snap for.</param>
         /// <returns>The snap point.</returns>
-        public static Result<SnapPoint> Snap(this RouterDb routerDb, double longitude, double latitude, float maxOffsetInMeter = 1000,
+        public static async Task<Result<SnapPoint>> Snap(this RouterDb routerDb, double longitude, double latitude, float maxOffsetInMeter = 1000,
             Profile profile = null)
         {
             ProfileHandler profileHandler = null;
@@ -47,7 +48,7 @@ namespace Itinero
                     latitude + latitudeOffset);
 
                 // make sure data is loaded.
-                routerDb.DataProvider?.TouchBox(box);
+                await routerDb.DataProvider?.TouchBox(box);
 
                 // snap to closest edge.
                 var snapPoint = routerDb.SnapInBox(box, (eEnum) =>
@@ -240,7 +241,7 @@ namespace Itinero
         /// <param name="source">The source location.</param>
         /// <param name="target">The target location.</param>
         /// <returns>A route.</returns>
-        public static Result<Route> Calculate(this RouterDb routerDb, RoutingSettings settings, SnapPoint source, SnapPoint target)
+        public static async Task<Result<Route>> Calculate(this RouterDb routerDb, RoutingSettings settings, SnapPoint source, SnapPoint target)
         {
             var profile = settings.Profile;
             var profileHandler = routerDb.GetProfileHandler(profile);
@@ -266,11 +267,11 @@ namespace Itinero
             }
             
             // run dijkstra.
-            var path = Dijkstra.Default.Run(routerDb, source, target,
+            var path = await Dijkstra.Default.Run(routerDb, source, target,
                 profileHandler.GetForwardWeight,
-                settled: (v) =>
+                settled: async (v) =>
                 {
-                    routerDb.DataProvider?.TouchVertex(v);
+                    await routerDb.DataProvider?.TouchVertex(v);
                     return checkMaxDistance(v);
                 });
 
@@ -286,7 +287,7 @@ namespace Itinero
         /// <param name="source">The source location.</param>
         /// <param name="targets">The target locations.</param>
         /// <returns>The routes.</returns>
-        public static Result<Route>[] Calculate(this RouterDb routerDb, RoutingSettings settings, SnapPoint source, SnapPoint[] targets)
+        public static async Task<Result<Route>[]> Calculate(this RouterDb routerDb, RoutingSettings settings, SnapPoint source, SnapPoint[] targets)
         {
             var profile = settings.Profile;
             var profileHandler = routerDb.GetProfileHandler(profile);
@@ -311,11 +312,11 @@ namespace Itinero
                 return false;
             }
             
-            var paths = Dijkstra.Default.Run(routerDb, source, targets,
+            var paths = await Dijkstra.Default.Run(routerDb, source, targets,
                 profileHandler.GetForwardWeight,
-                settled: (v) =>
+                settled: async (v) =>
                 {
-                    routerDb.DataProvider?.TouchVertex(v);
+                    await routerDb.DataProvider?.TouchVertex(v);
                     return checkMaxDistance(v);
                 });
 
@@ -343,7 +344,7 @@ namespace Itinero
         /// <param name="sources">The source locations.</param>
         /// <param name="target">The target location.</param>
         /// <returns>The routes.</returns>
-        public static Result<Route>[] Calculate(this RouterDb routerDb, RoutingSettings settings, SnapPoint[] sources, SnapPoint target)
+        public static async Task<Result<Route>[]> Calculate(this RouterDb routerDb, RoutingSettings settings, SnapPoint[] sources, SnapPoint target)
         {
             var profile = settings.Profile;
             var profileHandler = routerDb.GetProfileHandler(profile);
@@ -369,11 +370,11 @@ namespace Itinero
                 return false;
             }
             
-            var paths = Dijkstra.Default.Run(routerDb, target, sources,
+            var paths = await Dijkstra.Default.Run(routerDb, target, sources,
                 profileHandler.GetBackwardWeight,
-                settled: (v) =>
+                settled: async (v) =>
                 {
-                    routerDb.DataProvider?.TouchVertex(v);
+                    await routerDb.DataProvider?.TouchVertex(v);
                     return checkMaxDistance(v);
                 });
 

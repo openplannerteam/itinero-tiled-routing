@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Itinero.Profiles;
 
 namespace Itinero.Tests.Functional
@@ -7,10 +8,10 @@ namespace Itinero.Tests.Functional
     /// </summary>
     public class ManyToOneTest : FunctionalTest<Route[], (RouterDb routerDb, SnapPoint[] sources, SnapPoint target, Profile profile)>
     {
-        protected override Route[] Execute((RouterDb routerDb, SnapPoint[] sources, SnapPoint target, Profile profile) input)
+        protected override async Task<Route[]> Execute((RouterDb routerDb, SnapPoint[] sources, SnapPoint target, Profile profile) input)
         {
             var (routerDb, sources, target, profile) = input;
-            var results = routerDb.Calculate( new RoutingSettings() { Profile = profile }, sources, target);
+            var results = await routerDb.Calculate( new RoutingSettings() { Profile = profile }, sources, target);
 
             var routes = new Route[sources.Length];
             for (var r = 0; r < routes.Length; r++)

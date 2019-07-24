@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Itinero.Tests.Functional.Performance;
 
 namespace Itinero.Tests.Functional
@@ -34,11 +35,11 @@ namespace Itinero.Tests.Functional
         /// <param name="name">The test name.</param>
         /// <param name="count">The count.</param>
         /// <returns>The output.</returns>
-        public TOut Run(TIn input = default(TIn), string name = null, int count = 1)
+        public async Task<TOut> Run(TIn input = default(TIn), string name = null, int count = 1)
         {
             try
             {
-                return TrackPerformance ? RunPerformance(input, name: name, count: count) : Execute(input);
+                return TrackPerformance ? await RunPerformance(input, name: name, count: count) : await Execute(input);
             }
             catch (Exception ex)
             {
@@ -55,12 +56,12 @@ namespace Itinero.Tests.Functional
         /// <param name="count">The # of times to repeat the test.</param>
         /// <param name="name">The test name.</param>
         /// <returns>The output.</returns>
-        public TOut RunPerformance(TIn input, int count = 1, string name = null)
+        public async Task<TOut> RunPerformance(TIn input, int count = 1, string name = null)
         {
             if (name == null) name = this.Name;
-            Func<TIn, PerformanceTestResult<TOut>>
-                executeFunc = (i) => new PerformanceTestResult<TOut>(Execute(i));
-            return executeFunc.TestPerf(name, input, count);
+            Func<TIn, Task<PerformanceTestResult<TOut>>>
+                executeFunc = async (i) => new PerformanceTestResult<TOut>(await Execute(i));
+            return (await executeFunc.TestPerf(name, input, count)).Result;
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace Itinero.Tests.Functional
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>The output.</returns>
-        protected abstract TOut Execute(TIn input);
+        protected abstract Task<TOut> Execute(TIn input);
 
         /// <summary>
         /// Asserts that the given value is true.

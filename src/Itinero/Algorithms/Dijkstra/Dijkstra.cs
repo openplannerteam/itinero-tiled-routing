@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Itinero.Algorithms.DataStructures;
 using Itinero.Data.Graphs;
 
@@ -20,8 +21,8 @@ namespace Itinero.Algorithms.Dijkstra
         /// Calculates a path.
         /// </summary>
         /// <returns>The path.</returns>
-        public Path Run(RouterDb routerDb, SnapPoint source, SnapPoint target, 
-            Func<RouterDbEdgeEnumerator, uint> getWeight, Func<VertexId, bool> settled = null, Func<VertexId, bool> queued = null)
+        public async Task<Path> Run(RouterDb routerDb, SnapPoint source, SnapPoint target, 
+            Func<RouterDbEdgeEnumerator, uint> getWeight, Func<VertexId, Task<bool>> settled = null, Func<VertexId, Task<bool>> queued = null)
         {
             var enumerator = routerDb.GetEdgeEnumerator();
             _tree.Clear();
@@ -121,7 +122,8 @@ namespace Itinero.Algorithms.Dijkstra
                 // log visit.
                 _visits.Add(currentVisit.vertex);
 
-                if (settled != null && settled(currentVisit.vertex))
+                if (settled != null &&
+                    await settled(currentVisit.vertex))
                 {
                     // break if requested.
                     continue;
@@ -165,7 +167,7 @@ namespace Itinero.Algorithms.Dijkstra
                     if (neighbourEdge == currentVisit.edge) continue; // don't consider u-turns.
 
                     if (queued != null &&
-                        queued.Invoke(enumerator.To))
+                        await queued(enumerator.To))
                     { // don't queue this vertex if the queued function returns true.
                         continue;
                     }
@@ -219,8 +221,8 @@ namespace Itinero.Algorithms.Dijkstra
         /// Calculates a path.
         /// </summary>
         /// <returns>The path.</returns>
-        public Path[] Run(RouterDb routerDb, SnapPoint source, SnapPoint[] targets,
-            Func<RouterDbEdgeEnumerator, uint> getWeight, Func<VertexId, bool> settled = null, Func<VertexId, bool> queued = null)
+        public async Task<Path[]> Run(RouterDb routerDb, SnapPoint source, SnapPoint[] targets,
+            Func<RouterDbEdgeEnumerator, uint> getWeight, Func<VertexId, Task<bool>> settled = null, Func<VertexId, Task<bool>> queued = null)
         {
             var enumerator = routerDb.GetEdgeEnumerator();
             _tree.Clear();
@@ -336,7 +338,8 @@ namespace Itinero.Algorithms.Dijkstra
                 // log visit.
                 _visits.Add(currentVisit.vertex);
 
-                if (settled != null && settled(currentVisit.vertex))
+                if (settled != null && 
+                    await settled(currentVisit.vertex))
                 {
                     // break if requested.
                     break;
@@ -396,7 +399,7 @@ namespace Itinero.Algorithms.Dijkstra
                     if (neighbourEdge == currentVisit.edge) continue; // don't consider u-turns.
 
                     if (queued != null &&
-                        queued.Invoke(enumerator.To))
+                        await queued(enumerator.To))
                     { // don't queue this vertex if the queued function returns true.
                         continue;
                     }
