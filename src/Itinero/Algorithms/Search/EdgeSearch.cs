@@ -100,14 +100,15 @@ namespace Itinero.Algorithms.Search
                         var startLength = length;
                         length += segmentLength;
                         
-                        // check if we even need to check.
-                        var previousDistance = Coordinate.DistanceEstimateInMeter(previous, center);
-                        var shapePointDistance = Coordinate.DistanceEstimateInMeter(current, center);
-                        if (previousDistance + segmentLength > bestDistance &&
-                            shapePointDistance + segmentLength > bestDistance)
-                        {
-                            continue;
-                        }
+                        // TODO: this check is weird, it sort of makes sense but also not.
+//                        // check if we even need to check.
+//                        var previousDistance = Coordinate.DistanceEstimateInMeter(previous, center);
+//                        var shapePointDistance = Coordinate.DistanceEstimateInMeter(current, center);
+//                        if (previousDistance + segmentLength > bestDistance &&
+//                            shapePointDistance + segmentLength > bestDistance)
+//                        {
+//                            continue;
+//                        }
                         
                         // project on line segment.
                         if (bestDistance <= 0) continue;

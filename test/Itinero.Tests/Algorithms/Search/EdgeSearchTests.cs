@@ -74,6 +74,35 @@ namespace Itinero.Tests.Algorithms.Search
             var snapPoint = network.SnapInBox((middle.lon - 0.01, middle.lat - 0.01, 
                 middle.lon + 0.01, middle.lat + 0.01));
             Assert.Equal(edge, snapPoint.EdgeId);
+            Assert.Equal(0.5, ((float)snapPoint.Offset / ushort.MaxValue), 1);
+        }
+
+        [Fact]
+        public void EdgeSearch_SnapInBox_MultipleEdges_ShouldSnapToSegmentWhenMiddleIsClosest()
+        {
+            var network = new RouterDb();
+            var vertex1 = network.AddVertex(
+                4.283750653266907,
+                51.486985061332);
+            var vertex2 = network.AddVertex(
+                4.2828816175460815,
+                51.48716544161935);
+            var vertex3 = network.AddVertex(
+                4.282275438308716,
+                51.4854718430416);
+            var vertex4 = network.AddVertex(
+                4.283267855644226,
+                51.485478524027414);
+            var edge1 = network.AddEdge(vertex1, vertex2);
+            var edge2 = network.AddEdge(vertex2, vertex3);
+            var edge3 = network.AddEdge(vertex3, vertex4);
+            var edge4 = network.AddEdge(vertex4, vertex1);
+
+            (double lon, double lat) middle = ((4.283750653266907 + 4.2828816175460815) / 2,(51.486985061332 + 51.48716544161935) / 2);
+            var snapPoint = network.SnapInBox((middle.lon - 0.01, middle.lat - 0.01, 
+                middle.lon + 0.01, middle.lat + 0.01));
+            Assert.Equal(edge1, snapPoint.EdgeId);
+            Assert.Equal(0.5, ((float)snapPoint.Offset / ushort.MaxValue), 1);
         }
     }
 }
