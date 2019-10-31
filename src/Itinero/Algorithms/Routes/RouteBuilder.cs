@@ -53,7 +53,7 @@ namespace Itinero.Algorithms.Routes
                 {
                     edgeEnumerator.MoveToEdge(segment.edge, !segment.forward);
                 }
-                var distance = edgeEnumerator.EdgeLength() / 100.0;
+                var distance = edgeEnumerator.EdgeLengthCentimeter() / 100.0;
                 distance = ((offset2 - offset1) / (double)ushort.MaxValue) * distance;
                 route.TotalDistance += distance;
                 if (segment.forward)

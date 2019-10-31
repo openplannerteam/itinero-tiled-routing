@@ -19,7 +19,7 @@ namespace Itinero.Profiles.Handlers
         {
             _edgeFactor = enumerator.FactorInEdgeDirection(_profile);
 
-            _length = enumerator.EdgeLength();
+            _length = enumerator.EdgeLengthCentimeter();
         }
 
         public override uint ForwardWeight => _edgeFactor.Value.ForwardFactor * _length;

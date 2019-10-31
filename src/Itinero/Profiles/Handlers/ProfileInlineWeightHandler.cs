@@ -72,7 +72,7 @@ namespace Itinero.Profiles.Handlers
             var attributes = _enumerator.GetAttributes();
             _edgeFactor = _profile.Factor(attributes);
 
-            _length = _enumerator.EdgeLength();
+            _length = _enumerator.EdgeLengthCentimeter();
             _weightForward = 0;
             _weightBackward = 0;
 

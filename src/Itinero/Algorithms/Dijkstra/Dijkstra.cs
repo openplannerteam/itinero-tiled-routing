@@ -211,7 +211,7 @@ namespace Itinero.Algorithms.Dijkstra
             path.Offset2 = path[path.Count - 1].forward
                 ? bestTarget.target.Offset
                 : (ushort) (ushort.MaxValue - bestTarget.target.Offset);
-
+            
             return path;
         }
 

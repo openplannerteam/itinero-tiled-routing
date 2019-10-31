@@ -72,19 +72,12 @@ namespace Itinero
         /// <param name="enumerator">The enumerator.</param>
         /// <param name="offset1">The start offset.</param>
         /// <param name="offset2">The end offset.</param>
-        /// <param name="includeVertices">Include vertices in case the range start at min offset or ends at max.</param>
-        /// <returns>The shape points between the given offsets. Includes the vertices by default when offsets at min/max.</returns>
+        /// <param name="includeEnds">Includes the first and last location at the exact offsets. Includes shape points if they match, includes vertices in case the range starts at min offset or ends at max.</param>
+        /// <returns>The shape points between the given offsets and the end points specified by the range.</returns>
         public static IEnumerable<Coordinate> GetShapeBetween(this RouterDbEdgeEnumerator enumerator,
-            ushort offset1 = 0, ushort offset2 = ushort.MaxValue, bool includeVertices = true)
+            ushort offset1 = 0, ushort offset2 = ushort.MaxValue, bool includeEnds = true)
         {
             if (offset1 > offset2) throw new ArgumentException($"{nameof(offset1)} has to smaller than or equal to {nameof(offset2)}");
-
-            // get edge and shape details.
-            var shape = enumerator.GetShape();
-            if (shape == null)
-            {
-                shape = new ShapeEnumerable(Enumerable.Empty<Coordinate>());
-            }
             
             // return the entire edge if requested.
             if (offset1 == 0 && offset2 == ushort.MaxValue)
@@ -96,8 +89,15 @@ namespace Itinero
                 yield break;
             }
 
+            // get edge and shape details.
+            var shape = enumerator.GetShape();
+            if (shape == null)
+            {
+                shape = new ShapeEnumerable(Enumerable.Empty<Coordinate>());
+            }
+
             // calculate offsets in meters.
-            var edgeLength = enumerator.EdgeLength();
+            var edgeLength = enumerator.EdgeLengthMeter();
             var offset1Length = (offset1/(double)ushort.MaxValue) * edgeLength;
             var offset2Length = (offset2/(double)ushort.MaxValue) * edgeLength;
 
@@ -106,12 +106,12 @@ namespace Itinero
             var before = offset1 > 0; // when there is a start offset.
             var length = 0.0;
             var previous = enumerator.FromLocation();
-            if (offset1 == 0 && includeVertices) yield return previous;
+            if (offset1 == 0 && includeEnds) yield return previous;
             for (var i = 0; i < shape.Count + 1; i++)
             {
                 Coordinate next;
                 if (i < shape.Count)
-                { // the 
+                { // the next shape point.
                     next = shape[i];
                 }
                 else
@@ -124,12 +124,12 @@ namespace Itinero
                 { // check if offset1 length has exceeded.
                     if (segmentLength + length >= offset1Length && 
                         offset1 > 0)
-                    { // we are before, but not we have move to after.
+                    { // we are before, but now we have move to after.
                         var segmentOffset = offset1Length - length;
                         var location = Coordinate.PositionAlongLine(previous, next, (segmentOffset / segmentLength));
                         previous = next;
                         before = false;
-                        yield return location;
+                        if (includeEnds) yield return location;
                     }
                 }
 
@@ -138,14 +138,19 @@ namespace Itinero
                     if (segmentLength + length > offset2Length &&
                         offset2 < ushort.MaxValue)
                     { // we are after but now we are after.
-                        var segmentOffset = offset2Length - length;
-                        var location = Coordinate.PositionAlongLine(previous, next, (segmentOffset / segmentLength));
-                        yield return location;
+                        if (includeEnds)
+                        {
+                            var segmentOffset = offset2Length - length;
+                            var location =
+                                Coordinate.PositionAlongLine(previous, next, (segmentOffset / segmentLength));
+                            yield return location;
+                        }
+
                         yield break;
                     }
 
                     // the case where include vertices is false.
-                    if (i == shape.Count && !includeVertices) yield break;
+                    if (i == shape.Count && !includeEnds) yield break;
                     yield return next;
                 }
 
@@ -160,24 +165,36 @@ namespace Itinero
         /// </summary>
         /// <param name="enumerator">The enumerator.</param>
         /// <returns>The length in meters.</returns>
-        internal static uint EdgeLength(this RouterDbEdgeEnumerator enumerator)
+        internal static double EdgeLengthMeter(this RouterDbEdgeEnumerator enumerator)
         {
             var distance = 0.0;
 
             // compose geometry.
             var shape = enumerator.GetCompleteShape();
-            var shapeEnumerator = shape.GetEnumerator();
-            shapeEnumerator.MoveNext();
-            var previous = shapeEnumerator.Current;
-
-            while (shapeEnumerator.MoveNext())
+            using (var shapeEnumerator = shape.GetEnumerator())
             {
-                var current = shapeEnumerator.Current;
-                distance += Coordinate.DistanceEstimateInMeter(previous, current);
-                previous = current;
+                shapeEnumerator.MoveNext();
+                var previous = shapeEnumerator.Current;
+
+                while (shapeEnumerator.MoveNext())
+                {
+                    var current = shapeEnumerator.Current;
+                    distance += Coordinate.DistanceEstimateInMeter(previous, current);
+                    previous = current;
+                }
             }
 
-            return (uint)(distance * 100);
+            return distance;
+        }
+
+        /// <summary>
+        /// Gets the length of an edge in centimeters.
+        /// </summary>
+        /// <param name="enumerator">The enumerator.</param>
+        /// <returns>The length in meters.</returns>
+        internal static uint EdgeLengthCentimeter(this RouterDbEdgeEnumerator enumerator)
+        {
+            return (uint)(enumerator.EdgeLengthMeter() * 100);
         }
 
         /// <summary>
@@ -204,7 +221,7 @@ namespace Itinero
         {
             // TODO: this can be optimized, build a performance test.
             var shape = enumerator.GetShapeBetween().ToList();
-            var length = enumerator.EdgeLength();
+            var length = enumerator.EdgeLengthCentimeter();
             var currentLength = 0.0;
             var targetLength = length * (offset / (double)ushort.MaxValue);
             for (var i = 1; i < shape.Count; i++)
