@@ -89,10 +89,7 @@ namespace Itinero.Profiles.Lua
                         speedForward =  1.0 / forwardFactor;
                     }
                 }
-                else
-                { // when forward_speed is filled, it's assumed to be in km/h, it needs to be convert to m/s.
-                    speedForward /= 3.6;
-                }
+                
                 if (!_resultsTable.TryGetDouble("backward_speed", out var speedBackward))
                 { // when backward_speed isn't explicitly filled, the assumption is that factors are in 1/(m/s)
                     speedBackward = 0;
@@ -101,13 +98,9 @@ namespace Itinero.Profiles.Lua
                         speedBackward = 1.0 / backwardFactor;
                     }
                 }
-                else
-                { // when forward_speed is filled, it's assumed to be in km/h, it needs to be convert to m/s.
-                    speedBackward /= 3.6;
-                }
 
-                return new EdgeFactor((uint)(forwardFactor * 100), (uint)(backwardFactor * 100), 
-                    (ushort)(speedForward * 100), (ushort)(speedBackward * 100), canstop);
+                return new EdgeFactor((uint)(forwardFactor * EdgeFactor.OffsetFactor), (uint)(backwardFactor * EdgeFactor.OffsetFactor), 
+                    (ushort)(speedForward * EdgeFactor.OffsetFactor), (ushort)(speedBackward * EdgeFactor.OffsetFactor), canstop);
             }
         }
     }

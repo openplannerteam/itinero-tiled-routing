@@ -8,10 +8,10 @@ namespace Itinero.Profiles
         /// <summary>
         /// Creates a new edge factor.
         /// </summary>
-        /// <param name="forwardFactor">The forward factor.</param>
-        /// <param name="backwardFactor">The backward factor.</param>
-        /// <param name="forwardSpeed">The forward speed in ms/s multiplied by 100.</param>
-        /// <param name="backwardSpeed">The backward speed in ms/s multiplied by 100.</param>
+        /// <param name="forwardFactor">The forward factor. By default this is 1/km/h * 100.</param>
+        /// <param name="backwardFactor">The backward factor. By default this is 1/km/h * 100.</param>
+        /// <param name="forwardSpeed">The forward speed in ms/s * 100.</param>
+        /// <param name="backwardSpeed">The backward speed in ms/s * 100.</param>
         /// <param name="canStop">The can stop.</param>
         public EdgeFactor(uint forwardFactor, uint backwardFactor,
             ushort forwardSpeed, ushort backwardSpeed, bool canStop = true)
@@ -22,6 +22,8 @@ namespace Itinero.Profiles
             this.BackwardSpeed = backwardSpeed;
             this.CanStop = canStop;
         }
+        
+        internal const double OffsetFactor = 1000; 
         
         /// <summary>
         /// Gets the forward factor, multiplied by an edge distance this is the weight.
@@ -41,7 +43,12 @@ namespace Itinero.Profiles
         /// <summary>
         /// Gets the backward speed in m/s.
         /// </summary>
-        public double BackwardSpeedMeterPerSecond => this.BackwardSpeed / 100.0;
+        public double BackwardSpeedMeterPerSecond => this.BackwardSpeed / OffsetFactor;
+
+        /// <summary>
+        /// The factor that indicates preference of the default speed.
+        /// </summary>
+        public double BackwardPreferenceFactor =>(1 / (this.BackwardFactor / OffsetFactor)) / this.BackwardSpeedMeterPerSecond;
 
         /// <summary>
         /// Gets the forward speed in ms/s multiplied by 100.
@@ -51,8 +58,13 @@ namespace Itinero.Profiles
         /// <summary>
         /// Gets the backward speed in m/s.
         /// </summary>
-        public double ForwardSpeedMeterPerSecond => this.ForwardSpeed / 100.0;
-        
+        public double ForwardSpeedMeterPerSecond => this.ForwardSpeed / OffsetFactor;
+
+        /// <summary>
+        /// The factor that indicates preference of the default speed.
+        /// </summary>
+        public double ForwardPreferenceFactor => (1 / (this.ForwardFactor / OffsetFactor)) / this.ForwardSpeedMeterPerSecond;
+
         /// <summary>
         /// Gets the can stop flag.
         /// </summary>
@@ -71,14 +83,15 @@ namespace Itinero.Profiles
         /// <inheritdoc/>
         public override string ToString()
         {
-            var forwardSpeed = this.ForwardSpeed / 100.0 * 3.6;
+            var forwardSpeed = this.ForwardSpeed / OffsetFactor * 3.6;
             if (this.ForwardFactor == this.BackwardFactor &&
                 this.ForwardSpeed == this.BackwardSpeed)
             {
-                return $"{this.ForwardFactor:F1}({forwardSpeed:F1}km/h)";
+                return $"{forwardSpeed:F1}km/h x {this.ForwardPreferenceFactor:F2} ({this.ForwardFactor:F0})";
             }
-            var backwardSpeed = this.BackwardSpeed / 100.0 * 3.6;
-            return $"F:{this.ForwardFactor:F1}({forwardSpeed:F1}km/h) B:{this.BackwardFactor:F1}({backwardSpeed:F1}km/h)";
+            var backwardSpeed = this.BackwardSpeed / OffsetFactor * 3.6;
+            return $"F:{forwardSpeed:F1}km/h x {this.ForwardPreferenceFactor:F2} ({this.ForwardFactor:F0}) " +
+                   $"B:{backwardSpeed:F1}km/h x {this.BackwardPreferenceFactor:F2} ({this.BackwardFactor:F0})";
         }
     }
 }
