@@ -23,7 +23,7 @@ namespace Itinero.Profiles
             this.CanStop = canStop;
         }
         
-        internal const double OffsetFactor = 1000; 
+        internal const double OffsetFactor = 100; 
         
         /// <summary>
         /// Gets the forward factor, multiplied by an edge distance this is the weight.
